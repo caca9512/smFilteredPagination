@@ -24,8 +24,8 @@
             pagerHeader: "pagerHeader",         // header pager id
             pagerFooter: "pagerFooter",         // footer pager id
             itemsPerPage: 6,                    // items per page
-            itemsInPager: 6,                    // max items displayed in pager (didn't do this yet)
-            itemsInPagerEdge: 2,                // max items displayed in pager edges (didn't do this yet)
+            itemsInPager: 6,                    // max items displayed in pager
+            itemsInPagerEdge: 2,                // max items displayed in pager edges
             itemsInPagerContinued: "...",       // text to display when page numbers are hidden
             showPagerHeader: true,              // show header pager?
             showPagerFooter: true,              // show footer pager?
@@ -39,6 +39,10 @@
             textPrev: "Previous",               // "prev" text
             textNext: "Next",                   // "next" text
             textLast: "Last",                   // "last" text
+            titleTextFirst: "First",                 // "first" text Title
+            titleTextPrev: "Previous",               // "prev" text Title
+            titleTextNext: "Next",                   // "next" text Title
+            titleTextLast: "Last",                   // "last" text Title
             hiddenClass: "hide",                // name of hidden class
             filteredClassList: ".filtered",     // comma separated list of filtered classes
             scrollToTopOnChange: false,         // Scroll to the top of the page on change.
@@ -81,6 +85,7 @@
             plugin.rebuild();
     
             plugin.el.find(plugin.settings.tpagerClass+" li a").live("click",function(e) {
+//                console.log('page click');
                 e.preventDefault();
                 plugin.settings.currentPage = (plugin.el.find(plugin.settings.tpagerClass+" li a.current").length) ? parseInt(plugin.el.find(plugin.settings.tpagerClass+" li a.current").attr("href").split("#")[1]) : 1;
 
@@ -101,12 +106,17 @@
 
         // Used to assist in pager overflow management
         var getInterval = function(pageCount,selectedPage)  {
-            var halfItemsInPager = Math.ceil(plugin.settings.itemsInPager/2);
-            var currentPage = parseInt(selectedPage);
-            var upperLimit = pageCount-plugin.settings.itemsInPager;
-            var start = (currentPage > halfItemsInPager) ? Math.max(Math.min(currentPage-halfItemsInPager, upperLimit), 1) : 1;
-            var end = (currentPage > halfItemsInPager) ? Math.min(currentPage+halfItemsInPager, pageCount) : Math.min(plugin.settings.itemsInPager, pageCount);
-            return [start,end];
+//            var halfItemsInPager = Math.ceil(plugin.settings.itemsInPager/2);
+//            var currentPage = parseInt(selectedPage);
+//            var upperLimit = pageCount-plugin.settings.itemsInPager;
+//            var start = (currentPage > halfItemsInPager) ? Math.max(Math.min(currentPage-halfItemsInPager, upperLimit), 1) : 1;
+//            var end = (currentPage > halfItemsInPager) ? Math.min(currentPage+halfItemsInPager, pageCount) : Math.min(plugin.settings.itemsInPager, pageCount);
+//            return [start,end];
+              var halfDisplayed  = Math.floor(plugin.settings.itemsInPager/2);
+              var start = Math.ceil(selectedPage > halfDisplayed ? Math.max(Math.min(selectedPage - halfDisplayed, (pageCount - plugin.settings.itemsInPager)), 1) : 1);
+              var end = Math.ceil(selectedPage > halfDisplayed ? Math.min(selectedPage + halfDisplayed, pageCount) : Math.min(plugin.settings.itemsInPager, pageCount));
+              end = end > pageCount ? pageCount : end;
+              return [start,end]; 
         };
 
         var buildPager = function(pager,pageCount,selectedPage) {
@@ -115,37 +125,60 @@
                 if (pageCount > 1 || plugin.settings.showOnOne) {
                     var interval = getInterval(pageCount,selectedPage);
 
-                    if (plugin.settings.showFirst && pageCount > 1) { list += '<li><a href="#first" class="first">'+plugin.settings.textFirst+'</a></li>'; }
-                    if (plugin.settings.showPrev && pageCount > 1) { list += '<li><a href="#prev" class="prev">'+plugin.settings.textPrev+'</a></li>'; }
+                    if (plugin.settings.showFirst && pageCount > 1) { list += '<li><a href="#first" title="' +plugin.settings.titleTextFirst + '" class="first">'+plugin.settings.textFirst+'</a></li>'; }
+                    if (plugin.settings.showPrev && pageCount > 1) { list += '<li><a href="#prev" title="' +plugin.settings.titleTextPrev + '" class="prev">'+plugin.settings.textPrev+'</a></li>'; }
 
+//                    if(interval.start > 0 && plugin.settings.itemsInPagerEdge > 0)
+//                    {
+//                      var end = Math.min(plugin.settings.itemsInPagerEdge, interval.start);
+//                    }
+
+//                    var end = pageCount;
+//                    for (var i=1; i <= end; i++) {
+//                      var classify = (i==selectedPage) ? ' class="current"' : '';
+//                      list += '<li><a href="#'+i+'"'+classify+'>'+i+'</a></li>';
+//                    }
+                    var Edge = plugin.settings.itemsInPagerEdge+1;
                     // Generate starting points
                     if (interval[0] > 1 && plugin.settings.itemsInPagerEdge > 0) {
-                        var end = Math.min(plugin.settings.itemsInPagerEdge, interval[0]);
+                        
+                        var end = Math.min(Edge, interval[0]);
                         for (var i=1; i < end; i++) {
                            list += '<li><a href="#'+i+'">'+i+'</a></li>';
                         }
-                        if (plugin.settings.itemsInPagerEdge < interval[0] && plugin.settings.itemsInPagerContinued) {
+                        if (Edge < interval[0] && (interval[0] - Edge != 1) && plugin.settings.itemsInPagerContinued) {
                            list += "<span>"+plugin.settings.itemsInPagerContinued+"</span>";
                         }
+                        else if (interval[0] - Edge == 1) {
+                          
+                          list += '<li><a href="#'+Edge+'">'+Edge+'</a></li>';
+                        }
+
                     }
                     // Generate interval links
                     for (var i=interval[0]; i <= interval[1]; i++) {
                         var classify = (i==selectedPage) ? ' class="current"' : '';
                         list += '<li><a href="#'+i+'"'+classify+'>'+i+'</a></li>';
                     }
+
                     // Generate ending points
                     if (interval[1] < pageCount && plugin.settings.itemsInPagerEdge > 0) {
-                        if (pageCount-plugin.settings.itemsInPagerEdge > interval[1] && plugin.settings.itemsInPagerContinued) {
+                        if (pageCount-plugin.settings.itemsInPagerEdge > interval[1] && (pageCount-plugin.settings.itemsInPagerEdge-interval[1] != 1) && plugin.settings.itemsInPagerContinued) {
                            list += "<span>"+plugin.settings.itemsInPagerContinued+"</span>";
                         }
-                        var begin = Math.max(pageCount-plugin.settings.itemsInPagerEdge, interval[1])+1;
+                        else if(pageCount-plugin.settings.itemsInPagerEdge-interval[1] == 1)
+                        {
+                          var iend = interval[1] + 1;
+                          list += '<li><a href="#'+iend+'">'+iend+'</a></li>';
+                        }
+                        var begin = Math.max(pageCount-plugin.settings.itemsInPagerEdge+1, interval[1]+1);
                         for (var i=begin; i <= pageCount; i++) {
                            list += '<li><a href="#'+i+'">'+i+'</a></li>';
                         }
                     }
                     
-                    if (plugin.settings.showNext && pageCount > 1) { list += '<li><a href="#next" class="next">'+plugin.settings.textNext+'</a></li>'; }
-                    if (plugin.settings.showLast && pageCount > 1) { list += '<li><a href="#last" class="last">'+plugin.settings.textLast+'</a></li>'; }
+                    if (plugin.settings.showNext && pageCount > 1) { list += '<li><a href="#next" title="' +plugin.settings.titleTextNext + '" class="next">'+plugin.settings.textNext+'</a></li>'; }
+                    if (plugin.settings.showLast && pageCount > 1) { list += '<li><a href="#last" title="' +plugin.settings.titleTextLast + '" class="last">'+plugin.settings.textLast+'</a></li>'; }
                 }
             }
             list += "</ul>";
@@ -153,8 +186,9 @@
         };
         
         var setupPages = function(currentPage) {
+//            console.log('setuppage:' + currentPage);
             var currentPage = typeof(currentPage) != 'undefined' ? currentPage : 1;
-            plugin.el.find(plugin.settings.pagerItems,plugin.settings.pagerItemsWrapper).filter(plugin.settings.filteredClassList).addClass("hide");
+            plugin.el.find(plugin.settings.pagerItems,plugin.settings.pagerItemsWrapper).filter(plugin.settings.filteredClassList).addClass(plugin.settings.hiddenClass);
             plugin.el.find(plugin.settings.pagerItems,plugin.settings.pagerItemsWrapper).not(plugin.settings.filteredClassList).addClass(plugin.settings.hiddenClass).slice(currentPage-1,plugin.settings.itemsPerPage).removeClass(plugin.settings.hiddenClass);
         };
 
@@ -164,6 +198,7 @@
         };
 
         plugin.setCurrentPage = function(clickedPage) {
+//        console.log('clickpage:' + clickedPage);
             var currentPage = plugin.settings.currentPage;
             var pageCount = Math.ceil(plugin.el.find(plugin.settings.pagerItems,plugin.settings.pagerItemsWrapper).not(plugin.settings.filteredClassList).length/plugin.settings.itemsPerPage);
 
@@ -225,6 +260,7 @@
         };
 
         plugin.rebuild = function() {
+//            console.log('Rebuild');
             var pageCount = Math.ceil(plugin.el.find(plugin.settings.pagerItems,plugin.settings.pagerItemsWrapper).not(plugin.settings.filteredClassList).length/plugin.settings.itemsPerPage);
             plugin.settings.pageCount = pageCount;
             plugin.settings.currentPage = 1;
