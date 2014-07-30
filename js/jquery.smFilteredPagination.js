@@ -10,6 +10,7 @@
  *
  * More at http://www.github.com/saltermitchell
  * and http://www.saltermitchell.com
+ * and https://github.com/caca9512/smFilteredPagination
  * 
  */
 ;(function($) {
@@ -53,6 +54,8 @@
             },
             locationHashUpdate: function(page) { // function to handle the page hash on update
                 location.hash = page;
+            },
+            pageChangeHandler: function(page)  {  //function to handle the changed page
             },
             insertPagerHeader: function(el) {   // insertPagerHeader function, automatically inserts pagerHeader if not found and show is true
                 var pagerContents = '<div id="' + this.pagerHeader + '" class="' + this.pagerClass + '"></div>';
@@ -238,6 +241,8 @@
             }
             plugin.settings.currentPage = selectedPage;
             if (plugin.settings.handleLocationHash) { plugin.settings.locationHashUpdate(selectedPage); }
+
+            plugin.settings.pageChangeHandler(selectedPage);
         }
 
         plugin.getItemsPerPage = function(n) {
